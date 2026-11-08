@@ -10,7 +10,14 @@ con una sola línea en [`.github/workflows/infra.yml`](.github/workflows/infra.y
 uses: germannylezama-pragma/github-actions-benefits/.github/workflows/reusable-infra-scan.yml@main
 ```
 
-Con eso obtiene Checkov + Trivy + Infracost en paralelo, el Job Summary y el gate, para `dev` y `prod`, cada uno con su presupuesto.
+Usa también `reusable-contexto.yml` (rama → ambiente) y `reusable-deploy.yml`, con las mismas reglas del repo central y presupuestos propios:
+
+| Rama | Ambiente | Deploy |
+|---|---|---|
+| `dev` | dev ($50) | — |
+| `main` | prod ($200) | — |
+| `deploy/dev` | dev | ✅ |
+| `deploy/prod` | prod | ✅ con aprobación |
 
 | Referencia | Qué versión del pipeline usa |
 |---|---|
