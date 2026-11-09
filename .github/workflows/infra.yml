@@ -23,7 +23,7 @@ jobs:
   contexto:
     uses: germannylezama-pragma/github-actions-benefits/.github/workflows/reusable-contexto.yml@main
     with:
-      presupuestos: '{"dev":50,"prod":200}' # este equipo solo tiene dev y prod
+      ambientes: "dev prod" # este equipo solo tiene dev y prod
 
   analizar:
     name: "Análisis · ${{ needs.contexto.outputs.environment }}"
@@ -32,7 +32,6 @@ jobs:
     with:
       environment: ${{ needs.contexto.outputs.environment }}
       tf_dir: terraform
-      budget: ${{ fromJSON(needs.contexto.outputs.budget) }}
     secrets: inherit
 
   deploy:
