@@ -1,0 +1,22 @@
+name: "PR · Analizar solo lo que cambia"
+run-name: "PR #${{ github.event.pull_request.number }} · ${{ github.head_ref }} → ${{ github.base_ref }}"
+
+# Mismo análisis de PR que el repo central, reutilizado con una línea:
+# revisa solo los .tf que el PR crea o modifica y comenta el resultado en el PR.
+
+on:
+  pull_request:
+    branches: [dev, cert, main, "deploy/**"]
+    paths: ["**.tf"]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-cambios-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr:
+    uses: germannylezama-pragma/github-actions-benefits/.github/workflows/reusable-pr-cambios.yml@main
