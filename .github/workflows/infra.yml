@@ -3,41 +3,60 @@ run-name: "Infra equipo · ${{ github.base_ref || github.ref_name }} (${{ github
 
 # Este repo NO tiene lógica de pipeline propia: llama a los workflows
 # reutilizables de germannylezama-pragma/github-actions-benefits.
-# Mismas reglas que el repo central:
-#   dev → dev · main → prod (solo análisis) · deploy/dev, deploy/prod → análisis + deploy
-# Cambiar @main por @<otra-rama> prueba una versión nueva del pipeline sin tocar este repo.
+#   dev → dev · cert → cert · main → prod (solo análisis) · deploy/<amb> → análisis + deploy
+#
+# VERSIONES DEL PIPELINE:
+#   dev y prod usan @main (estable).
+#   cert usa @feature/comentario-costo: la versión en prueba que comenta el costo en el PR.
+#   Cuando cert la apruebe, se hace merge en el repo central y dev/prod la reciben solos.
+# `uses:` no acepta variables, por eso hay dos jobs de análisis y un `if` elige cuál corre.
 
 on:
   pull_request:
-    branches: [dev, main, "deploy/**"]
+    branches: [dev, cert, main, "deploy/**"]
     paths: ["terraform/**", ".github/workflows/**"]
   push:
-    branches: [dev, main, "deploy/**"]
+    branches: [dev, cert, main, "deploy/**"]
   workflow_dispatch:
 
 permissions:
   contents: read
   security-events: write
+  pull-requests: write
 
 jobs:
   contexto:
     uses: germannylezama-pragma/github-actions-benefits/.github/workflows/reusable-contexto.yml@main
     with:
-      ambientes: "dev prod" # este equipo solo tiene dev y prod
+      ambientes: "dev cert prod"
 
   analizar:
-    name: "Análisis · ${{ needs.contexto.outputs.environment }}"
+    name: "Análisis · ${{ needs.contexto.outputs.environment }} · @main"
     needs: contexto
+    if: needs.contexto.outputs.environment != 'cert'
     uses: germannylezama-pragma/github-actions-benefits/.github/workflows/reusable-infra-scan.yml@main
     with:
       environment: ${{ needs.contexto.outputs.environment }}
       tf_dir: terraform
     secrets: inherit
 
+  analizar-cert:
+    name: "Análisis · cert · @feature/comentario-costo (en prueba)"
+    needs: contexto
+    if: needs.contexto.outputs.environment == 'cert'
+    uses: germannylezama-pragma/github-actions-benefits/.github/workflows/reusable-infra-scan.yml@feature/comentario-costo
+    with:
+      environment: cert
+      tf_dir: terraform
+    secrets: inherit
+
   deploy:
     name: "Deploy · ${{ needs.contexto.outputs.environment }}"
-    needs: [contexto, analizar]
-    if: needs.contexto.outputs.deploy == 'true'
+    needs: [contexto, analizar, analizar-cert]
+    # corre si el análisis que tocaba (uno de los dos) pasó
+    if: >-
+      always() && needs.contexto.outputs.deploy == 'true' &&
+      (needs.analizar.result == 'success' || needs.analizar-cert.result == 'success')
     permissions:
       contents: read
       id-token: write
