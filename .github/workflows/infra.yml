@@ -13,7 +13,9 @@ run-name: "Infra equipo · ${{ github.base_ref || github.ref_name }} (${{ github
 
 on:
   pull_request:
-    branches: [dev, cert, main, "deploy/**"]
+    # Solo PR hacia cert: ahí se prueba el comentario de costo de la versión en prueba.
+    # Los demás PR los revisa pr-cambios.yml (solo lo que cambia).
+    branches: [cert]
     paths: ["terraform/**", ".github/workflows/**"]
   push:
     branches: [dev, cert, main, "deploy/**"]
