@@ -1,4 +1,4 @@
 environment      = "cert"
-dynamodb_rcu     = 20
-dynamodb_wcu     = 10
+dynamodb_rcu     = 60
+dynamodb_wcu     = 30
 lambda_memory_mb = 512
