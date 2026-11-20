@@ -3,5 +3,5 @@
 # ARREGLO EN VIVO: descomentar la línea kms_master_key_id, commit y push.
 resource "aws_sns_topic" "alertas" {
   name = "equipo-${var.environment}-alertas"
-  kms_master_key_id = "alias/aws/sns"
+  #kms_master_key_id = "alias/aws/sns"
 }
